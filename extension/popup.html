@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 340px;
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      background: linear-gradient(145deg, #0a0a0f 0%, #12121a 50%, #0d0d14 100%);
+      color: #e5e5e5;
+      min-height: 400px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.8; transform: scale(1.02); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) translateX(-50%); }
+      50% { transform: translateY(-4px) translateX(-50%); }
+    }
+
+    @keyframes arcDraw {
+      from { stroke-dashoffset: 452; }
+    }
+
+    @keyframes arcDrawInner {
+      from { stroke-dashoffset: 364; }
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(0,180,255,0.4)); }
+      50% { filter: drop-shadow(0 0 12px rgba(0,180,255,0.6)); }
+    }
+
+    .glass-card {
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      background: linear-gradient(165deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+      border-radius: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ambient-glow {
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 60% 30%, rgba(80,200,255,0.08) 0%, transparent 50%);
+      pointer-events: none;
+      animation: pulse 4s ease-in-out infinite;
+    }
+
+    .ambient-glow.over-budget {
+      background: radial-gradient(circle at 60% 30%, rgba(255,120,80,0.08) 0%, transparent 50%);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      position: relative;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-container {
+      width: 38px;
+      height: 38px;
+    }
+
+    .header h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .header h1 .pulse {
+      color: #ff8c42;
+      margin-left: 5px;
+    }
+
+    .header-subtitle {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 1px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-dot.connected {
+      background: #50C896;
+      box-shadow: 0 0 8px rgba(80,200,150,0.5);
+    }
+
+    .status-dot.disconnected {
+      background: #FF6B6B;
+      box-shadow: 0 0 8px rgba(255,107,107,0.5);
+    }
+
+    .status-dot.unknown {
+      background: rgba(255,255,255,0.3);
+    }
+
+    .status-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* Session Gauge Section */
+    .gauge-section {
+      padding: 20px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: fadeSlideUp 0.5s ease-out;
+    }
+
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 400;
+      margin-bottom: 16px;
+    }
+
+    .gauge-container {
+      position: relative;
+      width: 160px;
+      height: 160px;
+    }
+
+    .gauge-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,140,66,0.1) 0%, transparent 70%);
+      filter: blur(20px);
+    }
+
+    .gauge-glow.high-usage {
+      background: radial-gradient(circle, rgba(255,100,80,0.15) 0%, transparent 70%);
+    }
+
+    .gauge svg {
+      transform: rotate(-90deg);
+    }
+
+    .gauge-track {
+      fill: none;
+      stroke: rgba(255,255,255,0.05);
+    }
+
+    .gauge-fill-usage {
+      fill: none;
+      stroke-linecap: round;
+      animation: arcDraw 1.2s ease-out;
+      filter: drop-shadow(0 0 8px rgba(255,140,66,0.5));
+    }
+
+    .gauge-fill-time {
+      fill: none;
+      stroke-linecap: round;
+      animation: arcDrawInner 1.2s ease-out, pulseGlow 2s ease-in-out infinite;
+    }
+
+    .gauge-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .gauge-percent {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 36px;
+      font-weight: 300;
+      color: #fff;
+      letter-spacing: -2px;
+      line-height: 1;
+    }
+
+    .gauge-percent span {
+      font-size: 18px;
+      color: rgba(255,255,255,0.4);
+      font-weight: 400;
+    }
+
+    .gauge-reset {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 4px;
+      font-weight: 300;
+    }
+
+    .gauge-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: rgba(0,180,255,0.6);
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    .gauge-legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .legend-dot.usage {
+      background: #ff8c42;
+      box-shadow: 0 0 6px rgba(255,140,66,0.5);
+    }
+
+    .legend-dot.time {
+      background: #00b4ff;
+      box-shadow: 0 0 6px rgba(0,180,255,0.5);
+    }
+
+    .legend-text {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* Weekly Pace Section */
+    .weekly-section {
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+      margin: 0 16px 16px;
+      border-radius: 14px;
+      animation: fadeSlideUp 0.6s ease-out;
+    }
+
+    .weekly-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .budget-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .budget-badge.under {
+      background: rgba(80,200,150,0.15);
+    }
+
+    .budget-badge.over {
+      background: rgba(255,100,80,0.15);
+    }
+
+    .budget-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .budget-dot.under {
+      background: #50C896;
+      box-shadow: 0 0 8px rgba(80,200,150,0.5);
+    }
+
+    .budget-dot.over {
+      background: #FF6B6B;
+      box-shadow: 0 0 8px rgba(255,107,107,0.5);
+    }
+
+    .budget-text {
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .budget-text.under {
+      color: #50C896;
+    }
+
+    .budget-text.over {
+      color: #FF6B6B;
+    }
+
+    .progress-container {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.8s ease-out;
+    }
+
+    .progress-fill.under {
+      background: linear-gradient(90deg, #50C896 0%, #6DD5B0 100%);
+      box-shadow: 0 0 12px rgba(80,200,150,0.4);
+    }
+
+    .progress-fill.over {
+      background: linear-gradient(90deg, #ff8c42 0%, #FF6B6B 100%);
+      box-shadow: 0 0 12px rgba(255,107,107,0.4);
+    }
+
+    .progress-marker {
+      position: absolute;
+      top: -4px;
+      transform: translateX(-50%);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .marker-line {
+      width: 2px;
+      height: 16px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 1px;
+      box-shadow: 0 0 8px rgba(255,255,255,0.3);
+    }
+
+    .marker-dot {
+      width: 6px;
+      height: 6px;
+      background: #ffffff;
+      border-radius: 50%;
+      margin-left: -2px;
+      margin-top: -2px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+
+    .weekly-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .weekly-usage {
+      font-size: 18px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+
+    .weekly-usage span {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      margin-left: 4px;
+    }
+
+    .weekly-elapsed {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* Sync Button */
+    .btn-container {
+      padding: 0 16px 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff8c42 0%, #ffa060 100%);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(255,140,66,0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255,140,66,0.4);
+    }
+
+    .btn-primary:disabled {
+      background: rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.3);
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .last-sync {
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      padding-bottom: 16px;
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 40px 20px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    .no-data p:first-child {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .no-data p:last-child {
+      font-size: 11px;
+      color: rgba(255,255,255,0.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="glass-card">
+    <div class="ambient-glow" id="ambientGlow"></div>
+
+    <div class="header">
+      <div class="header-left">
+        <div class="logo-container">
+          <svg viewBox="0 0 100 100" width="38" height="38">
+            <defs>
+              <linearGradient id="bubbleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#3a5a80" />
+                <stop offset="100%" stop-color="#2a4060" />
+              </linearGradient>
+              <linearGradient id="heartbeatGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#00b4ff" />
+                <stop offset="50%" stop-color="#ff8c42" />
+                <stop offset="100%" stop-color="#ff8c42" />
+              </linearGradient>
+              <filter id="glow">
+                <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+            </defs>
+            <path
+              d="M50 10 C25 10 10 28 10 48 C10 68 25 82 45 82 L35 95 L50 82 C75 82 90 68 90 48 C90 28 75 10 50 10"
+              fill="url(#bubbleGradient)"
+              stroke="rgba(100,150,200,0.3)"
+              stroke-width="1"
+            />
+            <path
+              d="M20 48 L35 48 L40 30 L50 65 L60 48 L70 48"
+              fill="none"
+              stroke="url(#heartbeatGradient)"
+              stroke-width="4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              filter="url(#glow)"
+            />
+            <path
+              d="M65 55 A20 20 0 0 1 35 55"
+              fill="none"
+              stroke="#ff8c42"
+              stroke-width="3"
+              stroke-linecap="round"
+              filter="url(#glow)"
+            />
+          </svg>
+        </div>
+        <div>
+          <h1>Claude<span class="pulse">Pulse</span></h1>
+          <div class="header-subtitle">Usage Monitor</div>
+        </div>
+      </div>
+      <div class="status-badge">
+        <span class="status-dot unknown" id="apiDot"></span>
+        <span class="status-text" id="apiStatus">Checking...</span>
+      </div>
+    </div>
+
+    <div id="usageContainer">
+      <div class="no-data">
+        <p>No usage data yet</p>
+        <p>Visit claude.ai to start tracking</p>
+      </div>
+    </div>
+
+    <div class="btn-container">
+      <button class="btn btn-primary" id="syncBtn">Sync Now</button>
+    </div>
+
+    <div class="last-sync" id="lastSync"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

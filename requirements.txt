@@ -1,0 +1,7 @@
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.3
+pystray>=0.19.5
+Pillow>=11.0.0
+win10toast-click>=0.1.2
+requests>=2.31.0
